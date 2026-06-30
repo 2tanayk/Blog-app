@@ -11,7 +11,9 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -47,6 +49,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OAuthAuthenticationException.class)
     public ResponseEntity<ErrorResponseDto> handleOAuthAuthenticationException(OAuthAuthenticationException exception, HttpServletRequest request) {
         return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponseDto> handleAuthorizationDeniedException(AuthorizationDeniedException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDto> handleAccessDeniedException(AccessDeniedException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, exception.getMessage(), request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

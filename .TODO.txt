@@ -1,2 +1,0 @@
-1. Create appropriate DTOs for each use case
-2. Create appropriate exceptions for where we simply throw a RuntimeException

@@ -5,12 +5,15 @@ import com.tanay.blogapp.exception.AuthenticationProviderMismatchException;
 import com.tanay.blogapp.exception.OAuthAuthenticationException;
 import com.tanay.blogapp.exception.ResourceNotFoundException;
 import com.tanay.blogapp.exception.UserAlreadyExistsException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -29,6 +32,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handleResourceNotFoundException(ResourceNotFoundException exception, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({EntityNotFoundException.class, JpaObjectRetrievalFailureException.class})
+    public ResponseEntity<ErrorResponseDto> handleEntityNotFoundException(Exception exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Referenced resource not found", request);
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
@@ -75,6 +83,11 @@ public class GlobalExceptionHandler {
         }
 
         return buildResponse(HttpStatus.BAD_REQUEST, message, request);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handleDataIntegrityViolationException(DataIntegrityViolationException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Request violates database constraints", request);
     }
 
     @ExceptionHandler(ResponseStatusException.class)

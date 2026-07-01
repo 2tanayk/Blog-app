@@ -6,12 +6,14 @@ import com.tanay.blogapp.entity.User;
 import com.tanay.blogapp.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/posts")
@@ -27,8 +29,10 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PostDto>> getAllPosts() {
-        return ResponseEntity.ok(postService.getAllPosts());
+    public ResponseEntity<Page<PostDto>> getAllPosts(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(postService.getAllPosts(pageable));
     }
 
     @GetMapping("/{id}")
@@ -64,7 +68,10 @@ public class PostController {
 //    }
 
     @GetMapping("/me")
-    public ResponseEntity<List<PostDto>> getAllPostsForAuthenticatedUser(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(postService.getAllPostsByUserId(user.getId()));
+    public ResponseEntity<Page<PostDto>> getAllPostsForAuthenticatedUser(
+            @AuthenticationPrincipal User user,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(postService.getAllPostsByUserId(user.getId(), pageable));
     }
 }

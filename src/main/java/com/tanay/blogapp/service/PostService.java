@@ -10,11 +10,11 @@ import com.tanay.blogapp.mapper.PostMapper;
 import com.tanay.blogapp.repository.PostRepository;
 import com.tanay.blogapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * NOTE:
@@ -36,16 +36,13 @@ public class PostService {
     @PreAuthorize("hasAuthority('POST_CREATE')")
     @Transactional
     public PostDto createPost(AddPostDto addPostDto, Long id) {
-        //TODO - Create appropriate exception
-        //DOUBT - should getReferenceById be used here
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.getReferenceById(id);
 
         Post newPost = postMapper.toEntity(addPostDto);
 
         newPost.setUser(user);
         // DOUBT - should you do this or not?
-        // does this cause perfomance issues?
+        // does this cause performance issues?
         //user.getPosts().add(newPost);
 
         newPost.setStatus(PostStatus.DRAFT);
@@ -62,10 +59,10 @@ public class PostService {
      * 2. Lazy Loading Safety: Keeps the database connection open so MapStruct can safely read any lazy-loaded child fields without crashing.
      */
     @Transactional(readOnly = true)
-    public List<PostDto> getAllPosts() {
-        List<Post> posts = postRepository.findAll();
+    public Page<PostDto> getAllPosts(Pageable pageable) {
+        Page<Post> posts = postRepository.findAll(pageable);
 
-        return posts.stream().map(postMapper::toDto).toList();
+        return posts.map(postMapper::toDto);
     }
 
     public PostDto getPostById(Long id) {
@@ -92,13 +89,9 @@ public class PostService {
      * 1. Performance: Reuses Hibernate's session cache, preventing a redundant second SELECT query.
      */
 
-    // TODO - use @Modifying custom query in the repo to make this more efficient
     @PreAuthorize("hasAuthority('POST_DELETE') and (@postSecurity.isOwner(#id, principal) or hasRole('ADMIN'))")
     @Transactional
     public void deletePost(Long id) {
-        if (!postRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Post with id " + id + " not found");
-        }
         postRepository.deleteById(id);
     }
 
@@ -130,9 +123,9 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostDto>getAllPostsByUserId(Long userId) {
-        List<Post> posts = postRepository.findByUserId(userId);
+    public Page<PostDto>getAllPostsByUserId(Long userId, Pageable pageable) {
+        Page<Post> posts = postRepository.findByUserId(userId, pageable);
 
-        return posts.stream().map(postMapper::toDto).toList();
+        return posts.map(postMapper::toDto);
     }
 }

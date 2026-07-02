@@ -86,8 +86,7 @@ public class PostService {
      * Deletes a post by its ID.
      */
 
-    // BUG: this method simply won't work for non-admins because ROLE_USER doesn't have authority POST_DELETE
-    // workaround for now
+    // TODO: fix this PreAuthorize, workaround for now
     @PreAuthorize("@postSecurity.isOwner(#id, principal) || hasAuthority('POST_DELETE')")
     @Transactional
     public void deletePost(Long id) {

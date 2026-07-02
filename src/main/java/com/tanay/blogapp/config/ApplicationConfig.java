@@ -24,7 +24,7 @@ public class ApplicationConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> repository
-                .findByEmail(username)
+                .findByEmailWithRolesAndPrivileges(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
@@ -45,6 +45,7 @@ public class ApplicationConfig {
         return new BCryptPasswordEncoder();
     }
 
+    //TODO - Remove this and its dependency
     @Bean
     public ModelMapper modelMapper() {
         ModelMapper modelMapper = new ModelMapper();

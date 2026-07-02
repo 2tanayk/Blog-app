@@ -21,6 +21,14 @@ import java.util.*;
                 @UniqueConstraint(name = "uk_users_provider", columnNames = {"provider_type", "provider_id"})
         }
 )
+@NamedEntityGraph(
+        name = "User.withRolesAndPrivileges",
+        attributeNodes = @NamedAttributeNode(value = "roles", subgraph = "roleWithPrivileges"),
+        subgraphs = @NamedSubgraph(
+                name = "roleWithPrivileges",
+                attributeNodes = @NamedAttributeNode("privileges")
+        )
+)
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,7 +49,7 @@ public class User implements UserDetails {
     @Column(name = "provider_type", nullable = false)
     private AuthProviderType providerType;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),

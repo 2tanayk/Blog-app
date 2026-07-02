@@ -19,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
-
+    @Transactional
     public AuthenticationResponseDto register(RegisterRequestDto request) {
         userRepository.findByEmail(request.email()).ifPresent(existingUser -> {
             if (isPasswordAccount(existingUser)) {
@@ -61,6 +62,7 @@ public class AuthenticationService {
         return new AuthenticationResponseDto(token);
     }
 
+    @Transactional(readOnly = true)
     public AuthenticationResponseDto login(LoginRequestDto request) {
         User user = userRepository
                 .findByEmail(request.email())
@@ -83,6 +85,7 @@ public class AuthenticationService {
         return new AuthenticationResponseDto(token);
     }
 
+    @Transactional
     public AuthenticationResponseDto oauth2Login(OAuth2User oAuth2User, String registrationId) {
         AuthProviderType providerType = getProviderTypeFromRegistrationId(registrationId);
         String providerId = determineProviderIdFromOAuth2User(oAuth2User, registrationId);
@@ -155,17 +158,19 @@ public class AuthenticationService {
     }
 
     private User createOAuthUser(OAuth2User oAuth2User, String email, String providerId, AuthProviderType providerType) {
-        User user = userRepository.save(User.builder()
+        User user = User.builder()
                 .name(determineNameFromOAuth2User(oAuth2User, email))
                 .email(email)
                 .providerId(providerId)
                 .providerType(providerType)
-                .build());
+                .build();
 
         Role defaultRole = roleRepository.findByName("ROLE_USER")
                 .orElseThrow(() -> new IllegalStateException("Critical Error: ROLE_USER not found in database."));
 
         user.getRoles().add(defaultRole);
+
+        user = userRepository.save(user);
 
         return user;
     }

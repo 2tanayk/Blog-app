@@ -65,6 +65,7 @@ public class PostService {
         return posts.map(postMapper::toDto);
     }
 
+    @Transactional(readOnly = true)
     public PostDto getPostById(Long id) {
         Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
         return postMapper.toDto(post);
@@ -81,15 +82,13 @@ public class PostService {
         return postMapper.toDto(existingPost);
     }
 
-    // DOUBT - is the below true?
     /**
      * Deletes a post by its ID.
-     *
-     * @Transactional is used here to bind 'existsById' and 'deleteById' into a single database session.
-     * 1. Performance: Reuses Hibernate's session cache, preventing a redundant second SELECT query.
      */
 
-    @PreAuthorize("hasAuthority('POST_DELETE') and (@postSecurity.isOwner(#id, principal) or hasRole('ADMIN'))")
+    // BUG: this method simply won't work for non-admins because ROLE_USER doesn't have authority POST_DELETE
+    // workaround for now
+    @PreAuthorize("@postSecurity.isOwner(#id, principal) || hasAuthority('POST_DELETE')")
     @Transactional
     public void deletePost(Long id) {
         postRepository.deleteById(id);
@@ -108,7 +107,7 @@ public class PostService {
         Post existingPost = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
 
         existingPost.setStatus(PostStatus.PUBLISHED);
-//        existingPost = postRepository.save(existingPost);
+
         return postMapper.toDto(existingPost);
     }
 
@@ -118,7 +117,7 @@ public class PostService {
         Post existingPost = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
 
         existingPost.setStatus(PostStatus.DRAFT);
-//        existingPost = postRepository.save(existingPost);
+
         return postMapper.toDto(existingPost);
     }
 

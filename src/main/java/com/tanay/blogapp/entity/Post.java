@@ -16,6 +16,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "posts")
+@NamedEntityGraph(
+        name = "Post.withUser",
+        attributeNodes = @NamedAttributeNode("user")
+)
 public class Post {
 
     @Id
@@ -43,7 +47,7 @@ public class Post {
     private LocalDateTime updatedAt;
 
     //TODO - Make this FetchType.Lazy and use join fetch, entity graph or dto projection
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 }

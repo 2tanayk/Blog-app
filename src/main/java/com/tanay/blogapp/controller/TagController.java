@@ -1,7 +1,9 @@
 package com.tanay.blogapp.controller;
 
 import com.tanay.blogapp.dto.PostDto;
+import com.tanay.blogapp.dto.TagsDto;
 import com.tanay.blogapp.service.PostService;
+import com.tanay.blogapp.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TagController {
     private final PostService postService;
+    private final TagService tagService;
+
+    @GetMapping
+    public ResponseEntity<TagsDto> getAllTags(){
+        return ResponseEntity.ok(tagService.getAllTags());
+    }
 
     @GetMapping("/{tagName}/posts")
     public ResponseEntity<Page<PostDto>> getAllPosts(
@@ -26,4 +34,6 @@ public class TagController {
     ) {
         return ResponseEntity.ok(postService.getAllPostsByTagName(tagName.trim().toLowerCase(), pageable));
     }
+
+
 }

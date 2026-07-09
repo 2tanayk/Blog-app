@@ -3,6 +3,7 @@ package com.tanay.blogapp.controller;
 import com.tanay.blogapp.dto.PromoteUserRequestDto;
 import com.tanay.blogapp.service.AdminService;
 import com.tanay.blogapp.service.PostService;
+import com.tanay.blogapp.service.TagService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
     private final AdminService adminService;
     private final PostService postService;
+    private final TagService tagService;
 
     @GetMapping
     public ResponseEntity<String> admin(Authentication authentication) {
@@ -30,6 +32,12 @@ public class AdminController {
     @DeleteMapping("/posts/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id) {
         postService.deletePost(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/tags/{id}")
+    public ResponseEntity<Void> deleteTag(@PathVariable Long id) {
+        tagService.deleteTag(id);
         return ResponseEntity.noContent().build();
     }
 

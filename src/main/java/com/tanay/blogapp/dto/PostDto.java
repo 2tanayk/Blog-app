@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tanay.blogapp.entity.type.PostStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record PostDto(
         Long id,
@@ -15,6 +16,7 @@ public record PostDto(
         LocalDateTime createdAt,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime updatedAt,
-        PostAuthorDto author
+        PostAuthorDto author,
+        List<String> tags
 ) {
 }

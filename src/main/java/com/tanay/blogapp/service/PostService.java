@@ -3,11 +3,13 @@ package com.tanay.blogapp.service;
 import com.tanay.blogapp.dto.AddPostDto;
 import com.tanay.blogapp.dto.PostDto;
 import com.tanay.blogapp.entity.Post;
+import com.tanay.blogapp.entity.Tag;
 import com.tanay.blogapp.entity.User;
 import com.tanay.blogapp.entity.type.PostStatus;
 import com.tanay.blogapp.exception.ResourceNotFoundException;
 import com.tanay.blogapp.mapper.PostMapper;
 import com.tanay.blogapp.repository.PostRepository;
+import com.tanay.blogapp.repository.TagRepository;
 import com.tanay.blogapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,6 +17,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * NOTE:
@@ -29,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final TagRepository tagRepository;
     private final PostMapper postMapper;
 
     // DOUBT - what is the right approach to create new Post? this or since cascading rules are in
@@ -46,6 +54,7 @@ public class PostService {
         //user.getPosts().add(newPost);
 
         newPost.setStatus(PostStatus.DRAFT);
+        newPost.setTags(resolveTags(addPostDto.tags()));
 
         Post savedPost = postRepository.save(newPost);
         return postMapper.toDto(savedPost);
@@ -79,6 +88,7 @@ public class PostService {
 
         // existingPost is managed — dirty checking fires UPDATE at commit
         // no save() needed
+        existingPost.setTags(resolveTags(addPostDto.tags()));
         return postMapper.toDto(existingPost);
     }
 
@@ -121,8 +131,56 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public Page<PostDto>getAllPostsByUserId(Long userId, Pageable pageable) {
+    public Page<PostDto> getAllPostsByUserId(Long userId, Pageable pageable) {
         Page<Post> posts = postRepository.findByUserId(userId, pageable);
+
+        return posts.map(postMapper::toDto);
+    }
+
+    /**
+     * Resolves tag names to Tag entities via batch queries.
+     * <p>
+     * Normalizes all names, then fires a single SELECT to find existing tags.
+     * Missing tags are bulk-saved in one shot — not one-by-one.
+     * Total: 2 queries max, regardless of tag count.
+     */
+    private Set<Tag> resolveTags(List<String> tagNames) {
+        if (tagNames == null || tagNames.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        // Normalize all names upfront
+        List<String> normalized = tagNames.stream()
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .distinct()
+                .toList();
+
+        // One query to find all existing tags
+        List<Tag> existingTags = tagRepository.findByNameIn(normalized);
+        Set<String> existingNames = existingTags.stream()
+                .map(Tag::getName)
+                .collect(Collectors.toSet());
+
+        // Create entities for names that don't exist yet
+        List<Tag> newTags = normalized.stream()
+                .filter(name -> !existingNames.contains(name))
+                .map(name -> Tag.builder().name(name).build())
+                .toList();
+
+        // Bulk save new tags — one INSERT batch
+        if (!newTags.isEmpty()) {
+            newTags = tagRepository.saveAll(newTags);
+        }
+
+        // Combine and return
+        Set<Tag> allTags = new HashSet<>(existingTags);
+        allTags.addAll(newTags);
+        return allTags;
+    }
+
+    public Page<PostDto> getAllPostsByTagName(String tagName, Pageable pageable) {
+        Page<Post> posts = postRepository.findByTags_Name(tagName, pageable);
 
         return posts.map(postMapper::toDto);
     }

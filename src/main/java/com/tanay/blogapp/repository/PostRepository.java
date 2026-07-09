@@ -21,4 +21,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Override
     @EntityGraph(value = "Post.withUser")
     Optional<Post> findById(Long aLong);
+
+    @EntityGraph(value = "Post.withUser")
+    Page<Post> findByTags_Name(String tagName, Pageable pageable);
 }

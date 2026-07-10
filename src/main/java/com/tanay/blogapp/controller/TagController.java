@@ -23,7 +23,7 @@ public class TagController {
     private final TagService tagService;
 
     @GetMapping
-    public ResponseEntity<TagsDto> getAllTags(){
+    public ResponseEntity<TagsDto> getAllTags() {
         return ResponseEntity.ok(tagService.getAllTags());
     }
 
@@ -34,6 +34,4 @@ public class TagController {
     ) {
         return ResponseEntity.ok(postService.getAllPostsByTagName(tagName.trim().toLowerCase(), pageable));
     }
-
-
 }

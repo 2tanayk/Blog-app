@@ -1,6 +1,6 @@
 package com.tanay.blogapp.controller;
 
-import com.tanay.blogapp.dto.PostDto;
+import com.tanay.blogapp.dto.PostSummaryDto;
 import com.tanay.blogapp.dto.TagsDto;
 import com.tanay.blogapp.service.PostService;
 import com.tanay.blogapp.service.TagService;
@@ -28,7 +28,7 @@ public class TagController {
     }
 
     @GetMapping("/{tagName}/posts")
-    public ResponseEntity<Page<PostDto>> getAllPosts(
+    public ResponseEntity<Page<PostSummaryDto>> getAllPosts(
             @PathVariable String tagName,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {

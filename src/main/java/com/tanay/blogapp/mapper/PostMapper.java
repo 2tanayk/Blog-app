@@ -3,12 +3,14 @@ package com.tanay.blogapp.mapper;
 import com.tanay.blogapp.dto.AddPostDto;
 import com.tanay.blogapp.dto.PostAuthorDto;
 import com.tanay.blogapp.dto.PostDto;
+import com.tanay.blogapp.dto.PostSummaryDto;
 import com.tanay.blogapp.entity.Post;
 import com.tanay.blogapp.entity.Tag;
 import com.tanay.blogapp.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
 public interface PostMapper {
@@ -24,6 +26,16 @@ public interface PostMapper {
      */
     default String map(Tag tag) {
         return tag.getName();
+    }
+
+    @Mapping(source = "content", target = "excerpt", qualifiedByName = "truncate")
+    @Mapping(source = "user", target = "author")
+    PostSummaryDto toSummaryDto(Post post);
+
+    @Named("truncate")
+    default String truncateContent(String content) {
+        if (content == null) return null;
+        return content.length() > 200 ? content.substring(0, 197) + "..." : content;
     }
 
     @Mapping(target = "id", ignore = true)

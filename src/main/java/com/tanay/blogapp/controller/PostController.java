@@ -2,6 +2,7 @@ package com.tanay.blogapp.controller;
 
 import com.tanay.blogapp.dto.AddPostDto;
 import com.tanay.blogapp.dto.PostDto;
+import com.tanay.blogapp.dto.PostSummaryDto;
 import com.tanay.blogapp.entity.User;
 import com.tanay.blogapp.service.PostService;
 import jakarta.validation.Valid;
@@ -29,7 +30,7 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PostDto>> getAllPosts(
+    public ResponseEntity<Page<PostSummaryDto>> getAllPosts(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity.ok(postService.getAllPosts(pageable));
@@ -68,7 +69,7 @@ public class PostController {
 //    }
 
     @GetMapping("/me")
-    public ResponseEntity<Page<PostDto>> getAllPostsForAuthenticatedUser(
+    public ResponseEntity<Page<PostSummaryDto>> getAllPostsForAuthenticatedUser(
             @AuthenticationPrincipal User user,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {

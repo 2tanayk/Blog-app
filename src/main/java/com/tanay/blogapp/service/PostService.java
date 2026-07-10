@@ -2,6 +2,7 @@ package com.tanay.blogapp.service;
 
 import com.tanay.blogapp.dto.AddPostDto;
 import com.tanay.blogapp.dto.PostDto;
+import com.tanay.blogapp.dto.PostSummaryDto;
 import com.tanay.blogapp.entity.Post;
 import com.tanay.blogapp.entity.Tag;
 import com.tanay.blogapp.entity.User;
@@ -68,10 +69,10 @@ public class PostService {
      * 2. Lazy Loading Safety: Keeps the database connection open so MapStruct can safely read any lazy-loaded child fields without crashing.
      */
     @Transactional(readOnly = true)
-    public Page<PostDto> getAllPosts(Pageable pageable) {
+    public Page<PostSummaryDto> getAllPosts(Pageable pageable) {
         Page<Post> posts = postRepository.findAll(pageable);
 
-        return posts.map(postMapper::toDto);
+        return posts.map(postMapper::toSummaryDto);
     }
 
     @Transactional(readOnly = true)
@@ -131,10 +132,10 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public Page<PostDto> getAllPostsByUserId(Long userId, Pageable pageable) {
+    public Page<PostSummaryDto> getAllPostsByUserId(Long userId, Pageable pageable) {
         Page<Post> posts = postRepository.findByUserId(userId, pageable);
 
-        return posts.map(postMapper::toDto);
+        return posts.map(postMapper::toSummaryDto);
     }
 
     /**
@@ -144,6 +145,14 @@ public class PostService {
      * Missing tags are bulk-saved in one shot — not one-by-one.
      * Total: 2 queries max, regardless of tag count.
      */
+
+    @Transactional(readOnly = true)
+    public Page<PostSummaryDto> getAllPostsByTagName(String tagName, Pageable pageable) {
+        Page<Post> posts = postRepository.findByTags_Name(tagName, pageable);
+
+        return posts.map(postMapper::toSummaryDto);
+    }
+
     private Set<Tag> resolveTags(List<String> tagNames) {
         if (tagNames == null || tagNames.isEmpty()) {
             return new HashSet<>();
@@ -177,11 +186,5 @@ public class PostService {
         Set<Tag> allTags = new HashSet<>(existingTags);
         allTags.addAll(newTags);
         return allTags;
-    }
-
-    public Page<PostDto> getAllPostsByTagName(String tagName, Pageable pageable) {
-        Page<Post> posts = postRepository.findByTags_Name(tagName, pageable);
-
-        return posts.map(postMapper::toDto);
     }
 }

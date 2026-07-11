@@ -1,8 +1,6 @@
 package com.tanay.blogapp.controller;
 
-import com.tanay.blogapp.dto.AddPostDto;
-import com.tanay.blogapp.dto.PostDto;
-import com.tanay.blogapp.dto.PostSummaryDto;
+import com.tanay.blogapp.dto.*;
 import com.tanay.blogapp.entity.User;
 import com.tanay.blogapp.service.PostService;
 import jakarta.validation.Valid;
@@ -74,5 +72,12 @@ public class PostController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity.ok(postService.getAllPostsByUserId(user.getId(), pageable));
+    }
+
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<CommentDto> addCommentOnPost(@PathVariable Long id, @RequestBody @Valid AddCommentDto addCommentDto, @AuthenticationPrincipal User user) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(postService.addComment(id, addCommentDto, user.getId()));
     }
 }

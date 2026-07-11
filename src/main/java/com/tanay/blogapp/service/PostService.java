@@ -1,14 +1,12 @@
 package com.tanay.blogapp.service;
 
-import com.tanay.blogapp.dto.AddPostDto;
-import com.tanay.blogapp.dto.PostDto;
-import com.tanay.blogapp.dto.PostSummaryDto;
-import com.tanay.blogapp.entity.Post;
-import com.tanay.blogapp.entity.Tag;
-import com.tanay.blogapp.entity.User;
+import com.tanay.blogapp.dto.*;
+import com.tanay.blogapp.entity.*;
 import com.tanay.blogapp.entity.type.PostStatus;
 import com.tanay.blogapp.exception.ResourceNotFoundException;
+import com.tanay.blogapp.mapper.CommentMapper;
 import com.tanay.blogapp.mapper.PostMapper;
+import com.tanay.blogapp.repository.CommentRepository;
 import com.tanay.blogapp.repository.PostRepository;
 import com.tanay.blogapp.repository.TagRepository;
 import com.tanay.blogapp.repository.UserRepository;
@@ -38,7 +36,11 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
+    private final CommentRepository commentRepository;
+
     private final PostMapper postMapper;
+    private final CommentMapper commentMapper;
+
 
     // DOUBT - what is the right approach to create new Post? this or since cascading rules are in
     // place, saving directly through user
@@ -77,14 +79,14 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PostDto getPostById(Long id) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
+        Post post = postRepository.findPostWithUserById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
         return postMapper.toDto(post);
     }
 
     @PreAuthorize("hasAuthority('POST_EDIT') and (@postSecurity.isOwner(#id, principal) or hasRole('ADMIN'))")
     @Transactional
     public PostDto updatePost(Long id, AddPostDto addPostDto) {
-        Post existingPost = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
+        Post existingPost = postRepository.findPostWithUserById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
         postMapper.updateEntityFromDto(addPostDto, existingPost);
 
         // existingPost is managed — dirty checking fires UPDATE at commit
@@ -114,7 +116,7 @@ public class PostService {
     @PreAuthorize("hasAuthority('POST_EDIT') and (@postSecurity.isOwner(#id, principal) or hasRole('ADMIN'))")
     @Transactional
     public PostDto publishPost(Long id) {
-        Post existingPost = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
+        Post existingPost = postRepository.findPostWithUserById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
 
         existingPost.setStatus(PostStatus.PUBLISHED);
 
@@ -124,7 +126,7 @@ public class PostService {
     @PreAuthorize("hasAuthority('POST_EDIT') and (@postSecurity.isOwner(#id, principal) or hasRole('ADMIN'))")
     @Transactional
     public PostDto unpublishPost(Long id) {
-        Post existingPost = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
+        Post existingPost = postRepository.findPostWithUserById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
 
         existingPost.setStatus(PostStatus.DRAFT);
 
@@ -186,5 +188,28 @@ public class PostService {
         Set<Tag> allTags = new HashSet<>(existingTags);
         allTags.addAll(newTags);
         return allTags;
+    }
+
+    @Transactional
+    public CommentDto addComment(Long postId, AddCommentDto addCommentDto, Long userId) {
+        Post existingPost = postRepository
+                .findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Post with id " + postId + " not found"));
+
+        if (existingPost.getStatus() == PostStatus.DRAFT) {
+            throw new IllegalArgumentException("Commenting on a draft post is not allowed");
+        }
+
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + userId + " not found"));
+
+        Comment newComment = commentMapper.toEntity(addCommentDto);
+        newComment.setUser(user);
+        newComment.setPost(existingPost);
+
+        Comment savedComment = commentRepository.save(newComment);
+
+        return commentMapper.toDto(savedComment);
     }
 }

@@ -220,7 +220,7 @@ public class PostService {
         return posts.map(commentMapper::toDto);
     }
 
-    @PreAuthorize("@commentSecurity.isOwner(#commentId, #postId, principal) or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or @commentSecurity.isOwner(#commentId, #postId, principal)")
     @Transactional
     public void deleteCommentOnPost(Long postId, Long commentId) {
         commentRepository.deleteByIdAndPostId(commentId, postId);

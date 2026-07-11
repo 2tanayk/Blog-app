@@ -41,6 +41,12 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("posts/{postId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteCommentOnPost(@PathVariable Long postId, @PathVariable Long commentId) {
+        postService.deleteCommentOnPost(postId, commentId);
+        return ResponseEntity.noContent().build();
+    }
+
 //    @PatchMapping("/users/promote")
 //    public ResponseEntity<String> promoteUserToAdmin(
 //            @Valid @RequestBody PromoteUserRequestDto request

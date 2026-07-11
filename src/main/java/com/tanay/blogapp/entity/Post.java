@@ -8,7 +8,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -48,8 +50,17 @@ public class Post {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    //TODO - Make this FetchType.Lazy and use join fetch, entity graph or dto projection
-    @ManyToOne(fetch = FetchType.LAZY)
+    // TODO: Handle User Deletion Safeguard
+    // Currently, posts require a non-null author (@JoinColumn(nullable = false)).
+    // To prevent foreign key constraint violations when a user deletes their profile,
+    // choose and implement one of the following strategies later:
+    //
+    // Option A (Ghost User): Intercept deletion, reassign these posts to a
+    // permanent system user (e.g., ID: 1, "Deleted Account"), then delete original user.
+    //
+    // Option B (Soft Delete): Add a 'deleted' boolean flag to the User entity.
+    // Instead of hard-deleting the user, flip the flag to true and mask the UI profile.
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -61,4 +72,12 @@ public class Post {
     )
     @Builder.Default
     private Set<Tag> tags = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "post",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Comment> comments = new ArrayList<>();
 }

@@ -58,6 +58,7 @@ public class User implements UserDetails {
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
+    //TODO: Review this cascade again
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Post> posts = new ArrayList<>();
 

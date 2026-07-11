@@ -200,16 +200,29 @@ public class PostService {
             throw new IllegalArgumentException("Commenting on a draft post is not allowed");
         }
 
-        User user = userRepository
+        User author = userRepository
                 .findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id " + userId + " not found"));
 
         Comment newComment = commentMapper.toEntity(addCommentDto);
-        newComment.setUser(user);
+        newComment.setUser(author);
         newComment.setPost(existingPost);
 
         Comment savedComment = commentRepository.save(newComment);
 
         return commentMapper.toDto(savedComment);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CommentDto> getAllCommentsForPost(Long id, Pageable pageable) {
+        Page<Comment> posts = commentRepository.findByPostId(id, pageable);
+
+        return posts.map(commentMapper::toDto);
+    }
+
+    @PreAuthorize("@commentSecurity.isOwner(#commentId, #postId, principal) or hasRole('ADMIN')")
+    @Transactional
+    public void deleteCommentOnPost(Long postId, Long commentId) {
+        commentRepository.deleteByIdAndPostId(commentId, postId);
     }
 }

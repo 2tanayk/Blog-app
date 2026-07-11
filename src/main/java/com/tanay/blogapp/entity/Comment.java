@@ -13,6 +13,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "comments")
+@NamedEntityGraph(
+        name = "Comment.withUser",
+        attributeNodes = @NamedAttributeNode("user")
+)
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

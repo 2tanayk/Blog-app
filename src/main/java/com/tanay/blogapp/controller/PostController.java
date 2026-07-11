@@ -2,6 +2,7 @@ package com.tanay.blogapp.controller;
 
 import com.tanay.blogapp.dto.*;
 import com.tanay.blogapp.entity.User;
+import com.tanay.blogapp.repository.PostRepository;
 import com.tanay.blogapp.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/posts")
@@ -79,5 +82,19 @@ public class PostController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(postService.addComment(id, addCommentDto, user.getId()));
+    }
+
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<Page<CommentDto>> getAllCommentsForPost(
+            @PathVariable Long id,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(postService.getAllCommentsForPost(id, pageable));
+    }
+
+    @DeleteMapping("{postId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteCommentOnPost(@PathVariable Long postId, @PathVariable Long commentId) {
+        postService.deleteCommentOnPost(postId, commentId);
+        return ResponseEntity.noContent().build();
     }
 }

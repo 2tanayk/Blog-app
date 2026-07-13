@@ -3,6 +3,7 @@ package com.tanay.blogapp.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -30,4 +31,16 @@ public class Role {
     )
     @Builder.Default
     private Set<Privilege> privileges = new HashSet<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Role role)) return false;
+        return Objects.equals(name, role.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
 }

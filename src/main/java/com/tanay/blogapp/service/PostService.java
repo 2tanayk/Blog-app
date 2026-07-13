@@ -83,7 +83,7 @@ public class PostService {
         return postMapper.toDto(post);
     }
 
-    @PreAuthorize("hasAuthority('POST_EDIT') and (@postSecurity.isOwner(#id, principal) or hasRole('ADMIN'))")
+    @PreAuthorize("hasAuthority('POST_EDIT_ANY') or (hasAuthority('POST_EDIT_OWN') and @postSecurity.isOwner(#id, principal))")
     @Transactional
     public PostDto updatePost(Long id, AddPostDto addPostDto) {
         Post existingPost = postRepository.findPostWithUserById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
@@ -99,8 +99,7 @@ public class PostService {
      * Deletes a post by its ID.
      */
 
-    // TODO: fix this PreAuthorize, workaround for now
-    @PreAuthorize("@postSecurity.isOwner(#id, principal) || hasAuthority('POST_DELETE')")
+    @PreAuthorize("hasAuthority('POST_DELETE_ANY') or (hasAuthority('POST_DELETE_OWN') and @postSecurity.isOwner(#id, principal))")
     @Transactional
     public void deletePost(Long id) {
         postRepository.deleteById(id);
@@ -113,7 +112,7 @@ public class PostService {
      * 1. Auto-Commit: Hibernate automatically detects changes to the status and writes the UPDATE query
      * when the method ends, allowing us to remove the explicit '.save()' call.
      */
-    @PreAuthorize("hasAuthority('POST_EDIT') and (@postSecurity.isOwner(#id, principal) or hasRole('ADMIN'))")
+    @PreAuthorize("hasAuthority('POST_EDIT_ANY') or (hasAuthority('POST_EDIT_OWN') and @postSecurity.isOwner(#id, principal))")
     @Transactional
     public PostDto publishPost(Long id) {
         Post existingPost = postRepository.findPostWithUserById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
@@ -123,7 +122,7 @@ public class PostService {
         return postMapper.toDto(existingPost);
     }
 
-    @PreAuthorize("hasAuthority('POST_EDIT') and (@postSecurity.isOwner(#id, principal) or hasRole('ADMIN'))")
+    @PreAuthorize("hasAuthority('POST_EDIT_ANY') or (hasAuthority('POST_EDIT_OWN') and @postSecurity.isOwner(#id, principal))")
     @Transactional
     public PostDto unpublishPost(Long id) {
         Post existingPost = postRepository.findPostWithUserById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
@@ -190,6 +189,7 @@ public class PostService {
         return allTags;
     }
 
+    @PreAuthorize("hasAuthority('COMMENT_CREATE')")
     @Transactional
     public CommentDto addComment(Long postId, AddCommentDto addCommentDto, Long userId) {
         Post existingPost = postRepository
@@ -220,7 +220,7 @@ public class PostService {
         return posts.map(commentMapper::toDto);
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @commentSecurity.isOwner(#commentId, #postId, principal)")
+    @PreAuthorize("hasAuthority('COMMENT_DELETE_ANY') or (hasAuthority('COMMENT_DELETE_OWN') and @commentSecurity.isOwner(#commentId, #postId, principal))")
     @Transactional
     public void deleteCommentOnPost(Long postId, Long commentId) {
         commentRepository.deleteByIdAndPostId(commentId, postId);

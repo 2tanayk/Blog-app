@@ -10,7 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @RequiredArgsConstructor
 public class AdminService {
-    private final UserRepository userRepository;
+    //private final UserRepository userRepository;
 
 //    public String promoteUserToAdmin(String email) {
 //        User user = userRepository.findByEmail(email)

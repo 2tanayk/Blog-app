@@ -12,7 +12,6 @@ import lombok.*;
 @Entity
 @Table(name = "privileges")
 public class Privilege {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

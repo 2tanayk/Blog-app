@@ -16,6 +16,8 @@ import org.mapstruct.Named;
 public interface PostMapper {
 
     @Mapping(source = "user", target = "author")
+    @Mapping(target = "likeCount", ignore = true)
+    @Mapping(target = "likedByCurrentUser", ignore = true)
     PostDto toDto(Post post);
 
     PostAuthorDto toAuthorDto(User user);
@@ -30,6 +32,7 @@ public interface PostMapper {
 
     @Mapping(source = "content", target = "excerpt", qualifiedByName = "truncate")
     @Mapping(source = "user", target = "author")
+    @Mapping(target = "likeCount", ignore = true)
     PostSummaryDto toSummaryDto(Post post);
 
     @Named("truncate")

@@ -82,6 +82,15 @@ public class Post {
     )
     private List<Comment> comments = new ArrayList<>();
 
+    // TODO: might be inefficient, use repository bulk delete or database cascades
+    @OneToMany(
+            mappedBy = "post",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<PostLike> likes = new ArrayList<>();
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

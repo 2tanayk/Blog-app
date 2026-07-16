@@ -17,6 +17,18 @@ public record PostDto(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime updatedAt,
         PostAuthorDto author,
+        long likeCount,
+        boolean likedByCurrentUser,
         List<String> tags
 ) {
+    public PostDto withLikes(long likeCount, boolean likedByCurrentUser) {
+        return new PostDto(
+                id, title, content, coverImageUrl,
+                status, createdAt, updatedAt,
+                author,
+                likeCount,
+                likedByCurrentUser,
+                tags
+        );
+    }
 }

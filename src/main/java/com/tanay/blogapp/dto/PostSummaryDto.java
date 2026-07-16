@@ -13,6 +13,15 @@ public record PostSummaryDto(
         PostStatus status,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime createdAt,
-        PostAuthorDto author
+        PostAuthorDto author,
+        long likeCount
 ) {
+    public PostSummaryDto withLikeCount(long likeCount) {
+        return new PostSummaryDto(
+                id, title, excerpt, coverImageUrl,
+                status, createdAt,
+                author,
+                likeCount
+        );
+    }
 }

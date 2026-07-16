@@ -6,19 +6,19 @@ import com.tanay.blogapp.entity.type.PostStatus;
 import com.tanay.blogapp.exception.ResourceNotFoundException;
 import com.tanay.blogapp.mapper.CommentMapper;
 import com.tanay.blogapp.mapper.PostMapper;
-import com.tanay.blogapp.repository.CommentRepository;
-import com.tanay.blogapp.repository.PostRepository;
-import com.tanay.blogapp.repository.TagRepository;
-import com.tanay.blogapp.repository.UserRepository;
+import com.tanay.blogapp.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,6 +37,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final CommentRepository commentRepository;
+    private final PostLikeRepository postLikeRepository;
 
     private final PostMapper postMapper;
     private final CommentMapper commentMapper;
@@ -74,13 +75,23 @@ public class PostService {
     public Page<PostSummaryDto> getAllPosts(Pageable pageable) {
         Page<Post> posts = postRepository.findAll(pageable);
 
-        return posts.map(postMapper::toSummaryDto);
+        Map<Long, Long> likeCounts = fetchLikeCounts(posts.getContent());
+
+        return posts.map(post -> postMapper
+                .toSummaryDto(post)
+                .withLikeCount(likeCounts.getOrDefault(post.getId(), 0L)
+                )
+        );
     }
 
     @Transactional(readOnly = true)
     public PostDto getPostById(Long id) {
         Post post = postRepository.findPostWithUserById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
-        return postMapper.toDto(post);
+
+        long likeCount = postLikeRepository.countByPostId(id);
+        boolean likedByCurrentUser = isLikedByCurrentUser(id);
+
+        return postMapper.toDto(post).withLikes(likeCount, likedByCurrentUser);
     }
 
     @PreAuthorize("hasAuthority('POST_EDIT_ANY') or (hasAuthority('POST_EDIT_OWN') and @postSecurity.isOwner(#id, principal))")
@@ -136,7 +147,13 @@ public class PostService {
     public Page<PostSummaryDto> getAllPostsByUserId(Long userId, Pageable pageable) {
         Page<Post> posts = postRepository.findByUserId(userId, pageable);
 
-        return posts.map(postMapper::toSummaryDto);
+        Map<Long, Long> likeCounts = fetchLikeCounts(posts.getContent());
+
+        return posts.map(post -> postMapper
+                .toSummaryDto(post)
+                .withLikeCount(likeCounts.getOrDefault(post.getId(), 0L)
+                )
+        );
     }
 
     /**
@@ -151,7 +168,13 @@ public class PostService {
     public Page<PostSummaryDto> getAllPostsByTagName(String tagName, Pageable pageable) {
         Page<Post> posts = postRepository.findByTags_Name(tagName, pageable);
 
-        return posts.map(postMapper::toSummaryDto);
+        Map<Long, Long> likeCounts = fetchLikeCounts(posts.getContent());
+
+        return posts.map(post -> postMapper
+                .toSummaryDto(post)
+                .withLikeCount(likeCounts.getOrDefault(post.getId(), 0L)
+                )
+        );
     }
 
     private Set<Tag> resolveTags(List<String> tagNames) {
@@ -224,5 +247,79 @@ public class PostService {
     @Transactional
     public void deleteCommentOnPost(Long postId, Long commentId) {
         commentRepository.deleteByIdAndPostId(commentId, postId);
+    }
+
+    @Transactional
+    public LikeToggleDto toggleLikeUnlike(Long postId, Long userId) {
+        Post existingPost = postRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Post with id " + postId + " not found"));
+
+        if (existingPost.getStatus() == PostStatus.DRAFT) {
+            throw new IllegalArgumentException("Liking a draft post is not allowed");
+        }
+
+        PostLike like = postLikeRepository.findByPostIdAndUserId(postId, userId)
+                .orElseGet(PostLike::new);
+
+        boolean liked;
+
+        if (like.getId() == null) {
+            like.setPost(existingPost);
+            like.setUser(userRepository.getReferenceById(userId));
+
+            postLikeRepository.save(like);
+
+            liked = true;
+        } else {
+            postLikeRepository.delete(like);
+
+            liked = false;
+        }
+
+        long likeCount = postLikeRepository.countByPostId(postId);
+
+        return new LikeToggleDto(liked, likeCount);
+    }
+
+    public long getLikeCount(Long postId) {
+        if (!postRepository.existsById(postId)) {
+            throw new ResourceNotFoundException("Post with id " + postId + " not found");
+        }
+        return postLikeRepository.countByPostId(postId);
+    }
+
+    /**
+     * Batch-fetches like counts for a list of posts in a single query.
+     * Returns a map of postId → count, with 0 for posts that have no likes.
+     */
+    private Map<Long, Long> fetchLikeCounts(List<Post> posts) {
+        List<Long> postIds = posts.stream()
+                .map(Post::getId)
+                .toList();
+
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return postLikeRepository.countLikesByPostIds(postIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        PostLikeCountDto::postId,
+                        PostLikeCountDto::likeCount
+                ));
+    }
+
+    /**
+     * Checks if the currently authenticated user has liked the given post.
+     * Returns false for anonymous/unauthenticated requests.
+     */
+    private boolean isLikedByCurrentUser(Long postId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof User currentUser)) {
+            return false;
+        }
+
+        return postLikeRepository.existsByPostIdAndUserId(postId, currentUser.getId());
     }
 }

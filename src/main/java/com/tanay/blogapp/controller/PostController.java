@@ -97,4 +97,18 @@ public class PostController {
         postService.deleteCommentOnPost(postId, commentId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/like")
+    public ResponseEntity<LikeToggleDto> toggleLikeUnlike(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        var response = postService.toggleLikeUnlike(id,user.getId());
+
+        return ResponseEntity
+                .status(response.liked() ? HttpStatus.CREATED : HttpStatus.OK)
+                .body(response);
+    }
+
+    @GetMapping("/{postId}/likes/count")
+    public ResponseEntity<Long> getLikeCount(@PathVariable Long postId) {
+        return ResponseEntity.ok(postService.getLikeCount(postId));
+    }
 }

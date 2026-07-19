@@ -42,3 +42,11 @@ app:
   frontend-url: http://localhost:3000
   jwt:
     cookie-max-age-seconds: 86400
+
+# Keep docs off in production later — easy toggle
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    operations-sorter: alpha

@@ -1,0 +1,159 @@
+{
+  "_comment": "This is an EXAMPLE showing the flow-file format, translated from your old hardcoded blog script. Claude proposes a file like this by reading openapi.json; you review/edit it, then save it as test-flow.json in your project root. It gets reused on every future run until your API shape changes enough to need a re-propose.",
+  "steps": [
+    {
+      "id": "register_user",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "auth": null,
+      "body": { "name": "Test User", "email": "$USER_EMAIL", "password": "$USER_PASSWORD" },
+      "extract": {}
+    },
+    {
+      "id": "login_user",
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "auth": null,
+      "body": { "email": "$USER_EMAIL", "password": "$USER_PASSWORD" },
+      "extract": { "user_token": "token" }
+    },
+    {
+      "id": "login_admin",
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "auth": null,
+      "body": { "email": "$ADMIN_EMAIL", "password": "$ADMIN_PASSWORD" },
+      "extract": { "admin_token": "token" }
+    },
+    {
+      "id": "list_tags_public",
+      "method": "GET",
+      "path": "/api/v1/tags",
+      "auth": null,
+      "extract": {}
+    },
+    {
+      "id": "create_post_draft",
+      "method": "POST",
+      "path": "/api/v1/posts",
+      "auth": "user_token",
+      "body": { "title": "First Post", "content": "Content of the first post.", "tags": ["java", "spring"] },
+      "extract": { "draft_post_id": "id" }
+    },
+    {
+      "id": "create_post_to_publish",
+      "method": "POST",
+      "path": "/api/v1/posts",
+      "auth": "user_token",
+      "body": { "title": "Second Post", "content": "Content of the second post.", "tags": ["java"] },
+      "extract": { "post_id": "id" }
+    },
+    {
+      "id": "publish_post",
+      "method": "PATCH",
+      "path": "/api/v1/posts/{post_id}/publish",
+      "auth": "user_token",
+      "extract": {}
+    },
+    {
+      "id": "list_posts_paginated",
+      "method": "GET",
+      "path": "/api/v1/posts?page=0&size=10",
+      "auth": null,
+      "extract": {}
+    },
+    {
+      "id": "get_post_detail",
+      "method": "GET",
+      "path": "/api/v1/posts/{post_id}",
+      "auth": null,
+      "extract": {}
+    },
+    {
+      "id": "get_post_comments",
+      "method": "GET",
+      "path": "/api/v1/posts/{post_id}/comments",
+      "auth": null,
+      "extract": {}
+    },
+    {
+      "id": "add_comment",
+      "method": "POST",
+      "path": "/api/v1/posts/{post_id}/comments",
+      "auth": "user_token",
+      "body": { "content": "Great post!" },
+      "extract": { "comment_id": "id" }
+    },
+    {
+      "id": "like_post",
+      "method": "POST",
+      "path": "/api/v1/posts/{post_id}/like",
+      "auth": "user_token",
+      "extract": {}
+    },
+    {
+      "id": "get_like_count",
+      "method": "GET",
+      "path": "/api/v1/posts/{post_id}/likes/count",
+      "auth": null,
+      "extract": {}
+    },
+    {
+      "id": "my_posts",
+      "method": "GET",
+      "path": "/api/v1/posts/me?page=0&size=10",
+      "auth": "user_token",
+      "extract": {}
+    },
+    {
+      "id": "posts_by_tag",
+      "method": "GET",
+      "path": "/api/v1/tags/java/posts?page=0&size=10",
+      "auth": null,
+      "extract": {}
+    },
+    {
+      "id": "update_post",
+      "method": "PUT",
+      "path": "/api/v1/posts/{post_id}",
+      "auth": "user_token",
+      "body": { "title": "Updated Second Post", "content": "Updated content.", "tags": ["java", "spring"] },
+      "extract": {}
+    },
+    {
+      "id": "delete_comment",
+      "method": "DELETE",
+      "path": "/api/v1/posts/{post_id}/comments/{comment_id}",
+      "auth": "user_token",
+      "extract": {}
+    },
+    {
+      "id": "unpublish_post",
+      "method": "PATCH",
+      "path": "/api/v1/posts/{post_id}/unpublish",
+      "auth": "user_token",
+      "extract": {}
+    },
+    {
+      "id": "delete_post",
+      "method": "DELETE",
+      "path": "/api/v1/posts/{post_id}",
+      "auth": "user_token",
+      "extract": {}
+    },
+    {
+      "id": "admin_dashboard",
+      "method": "GET",
+      "path": "/api/v1/admin",
+      "auth": "admin_token",
+      "extract": {}
+    },
+    {
+      "id": "admin_delete_draft_post",
+      "method": "DELETE",
+      "path": "/api/v1/admin/posts/{draft_post_id}",
+      "auth": "admin_token",
+      "extract": {}
+    }
+  ]
+}

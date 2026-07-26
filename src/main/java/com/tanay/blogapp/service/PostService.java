@@ -110,6 +110,9 @@ public class PostService {
      * Deletes a post by its ID.
      */
 
+    // TODO: fires too many queries because of the cascade
+    // Fix: Add a @Modifying @Query in PostRepository that deletes post_tag, comments, and post_likes for a given post_id in bulk before deleting the
+    //  post. Or use DB-level ON DELETE CASCADE on the foreign key constraints.
     @PreAuthorize("hasAuthority('POST_DELETE_ANY') or (hasAuthority('POST_DELETE_OWN') and @postSecurity.isOwner(#id, principal))")
     @Transactional
     public void deletePost(Long id) {
@@ -202,6 +205,8 @@ public class PostService {
                 .toList();
 
         // Bulk save new tags — one INSERT batch
+        // DOUBT: should you do this? this generates n insert statements,
+        // how about a bulk insert statement?
         if (!newTags.isEmpty()) {
             newTags = tagRepository.saveAll(newTags);
         }
@@ -281,6 +286,9 @@ public class PostService {
         return new LikeToggleDto(liked, likeCount);
     }
 
+    //TODO: postRepository.existsById(postId) then postLikeRepository.countByPostId(postId).
+    // Two queries when countByPostId returning 0
+    //  for a non-existent post (or a single LEFT JOIN query) would suffice.
     public long getLikeCount(Long postId) {
         if (!postRepository.existsById(postId)) {
             throw new ResourceNotFoundException("Post with id " + postId + " not found");

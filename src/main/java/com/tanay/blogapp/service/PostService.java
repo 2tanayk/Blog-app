@@ -330,4 +330,16 @@ public class PostService {
 
         return postLikeRepository.existsByPostIdAndUserId(postId, currentUser.getId());
     }
+
+    public Page<PostSummaryDto> getPublishedPostsForUser(Long userId, Pageable pageable) {
+        Page<Post> posts = postRepository.findByUserIdAndStatus(userId, PostStatus.PUBLISHED, pageable);
+
+        Map<Long, Long> likeCounts = fetchLikeCounts(posts.getContent());
+
+        return posts.map(post -> postMapper
+                .toSummaryDto(post)
+                .withLikeCount(likeCounts.getOrDefault(post.getId(), 0L)
+                )
+        );
+    }
 }

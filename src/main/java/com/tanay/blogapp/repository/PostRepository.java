@@ -1,6 +1,7 @@
 package com.tanay.blogapp.repository;
 
 import com.tanay.blogapp.entity.Post;
+import com.tanay.blogapp.entity.type.PostStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -26,4 +27,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @EntityGraph(value = "Post.withUser")
     Page<Post> findByTags_Name(String tagName, Pageable pageable);
+
+    @EntityGraph(value = "Post.withUser")
+    Page<Post> findByUserIdAndStatus(Long id, PostStatus status, Pageable pageable);
 }

@@ -1,11 +1,13 @@
 package com.tanay.blogapp.repository;
 
 import com.tanay.blogapp.entity.Post;
+import com.tanay.blogapp.entity.User;
 import com.tanay.blogapp.entity.type.PostStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,4 +32,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @EntityGraph(value = "Post.withUser")
     Page<Post> findByUserIdAndStatus(Long id, PostStatus status, Pageable pageable);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Post p SET p.user = :ghost WHERE p.user.id = :userId")
+    void reassignPostsToGhost(@Param("userId") Long userId, @Param("ghost") User ghost);
 }

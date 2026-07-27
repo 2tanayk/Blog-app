@@ -51,16 +51,9 @@ public class Post {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    // TODO: Handle User Deletion Safeguard
-    // Currently, posts require a non-null author (@JoinColumn(nullable = false)).
-    // To prevent foreign key constraint violations when a user deletes their profile,
-    // choose and implement one of the following strategies later:
-    //
-    // Option A (Ghost User): Intercept deletion, reassign these posts to a
-    // permanent system user (e.g., ID: 1, "Deleted Account"), then delete original user.
-    //
-    // Option B (Soft Delete): Add a 'deleted' boolean flag to the User entity.
-    // Instead of hard-deleting the user, flip the flag to true and mask the UI profile.
+    // User deletion: posts, comments, and likes are reassigned to a "Deleted Account"
+    // ghost user seeded in data.sql. This preserves the FK constraint and keeps
+    // content visible under a [deleted] banner.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

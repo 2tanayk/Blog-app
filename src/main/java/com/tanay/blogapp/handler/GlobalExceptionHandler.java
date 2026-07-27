@@ -2,6 +2,7 @@ package com.tanay.blogapp.handler;
 
 import com.tanay.blogapp.dto.ErrorResponseDto;
 import com.tanay.blogapp.exception.AuthenticationProviderMismatchException;
+import com.tanay.blogapp.exception.BadRequestException;
 import com.tanay.blogapp.exception.OAuthAuthenticationException;
 import com.tanay.blogapp.exception.ResourceNotFoundException;
 import com.tanay.blogapp.exception.UserAlreadyExistsException;
@@ -72,6 +73,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponseDto> handleIllegalArgumentException(IllegalArgumentException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponseDto> handleBadRequestException(BadRequestException exception, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 

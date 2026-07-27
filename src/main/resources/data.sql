@@ -1,3 +1,7 @@
+-- 0. Seed ghost user for deleted account content
+INSERT INTO users (name, email, password, provider_type, created_at, bio)
+VALUES ('Deleted Account', 'deleted@blog.com', '', 'EMAIL', NOW(), '');
+
 -- 1. Insert Blog Permissions
 INSERT INTO privileges (name)
 VALUES ('POST_READ'),
@@ -41,8 +45,8 @@ AND p.name IN (
     );
 
 -- 5. Seed an admin user (password: admin123)
-INSERT INTO users (name, email, password, provider_type, created_at)
-VALUES ('Admin', 'admin@blog.com', '$2a$10$o0MXO3KdDMTgMwAf818Fe.OuB7/8iknaEQZi.0ZC8u1.Yc7ie3hkq', 'EMAIL', NOW());
+INSERT INTO users (name, email, password, provider_type, created_at, bio)
+VALUES ('Admin', 'admin@blog.com', '$2a$10$o0MXO3KdDMTgMwAf818Fe.OuB7/8iknaEQZi.0ZC8u1.Yc7ie3hkq', 'EMAIL', NOW(), '');
 
 -- 6. Assign ROLE_ADMIN to the admin user
 INSERT INTO users_roles (user_id, role_id)

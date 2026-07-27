@@ -6,6 +6,7 @@ import com.tanay.blogapp.service.PostService;
 import com.tanay.blogapp.service.TagService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
+@Slf4j
 public class AdminController {
     private final AdminService adminService;
     private final PostService postService;
@@ -26,23 +28,27 @@ public class AdminController {
 
     @GetMapping
     public ResponseEntity<String> admin(Authentication authentication) {
+        log.info("GET /admin - admin dashboard accessed by {}", authentication.getName());
         return ResponseEntity.ok("Admin access granted for " + authentication.getName());
     }
 
     @DeleteMapping("/posts/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+        log.info("DELETE /admin/posts/{} - admin deleting post", id);
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/tags/{id}")
     public ResponseEntity<Void> deleteTag(@PathVariable Long id) {
+        log.info("DELETE /admin/tags/{} - admin deleting tag", id);
         tagService.deleteTag(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("posts/{postId}/comments/{commentId}")
     public ResponseEntity<Void> deleteCommentOnPost(@PathVariable Long postId, @PathVariable Long commentId) {
+        log.info("DELETE /admin/posts/{}/comments/{} - admin deleting comment", postId, commentId);
         postService.deleteCommentOnPost(postId, commentId);
         return ResponseEntity.noContent().build();
     }

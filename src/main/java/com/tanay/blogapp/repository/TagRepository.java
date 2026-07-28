@@ -17,7 +17,7 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     List<Tag> findByNameIn(Collection<String> names);
 
-    @Modifying(flushAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(nativeQuery = true, value = "DELETE FROM post_tag WHERE tag_id = :tagId")
     void deletePostTagAssociations(@Param("tagId") Long tagId);
 }

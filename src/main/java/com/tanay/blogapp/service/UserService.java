@@ -1,11 +1,10 @@
 package com.tanay.blogapp.service;
 
-import com.tanay.blogapp.dto.PostSummaryDto;
+import com.tanay.blogapp.dto.UserDetailsDto;
+import com.tanay.blogapp.dto.MessageResponseDto;
 import com.tanay.blogapp.dto.UpdateUserPasswordDto;
 import com.tanay.blogapp.dto.UpdateUserProfileDto;
-import com.tanay.blogapp.dto.UpdateUserPasswordDto;
 import com.tanay.blogapp.dto.UserProfileDto;
-import com.tanay.blogapp.dto.MessageResponseDto;
 import com.tanay.blogapp.entity.User;
 import com.tanay.blogapp.exception.BadRequestException;
 import com.tanay.blogapp.exception.ResourceNotFoundException;
@@ -14,9 +13,9 @@ import com.tanay.blogapp.repository.CommentRepository;
 import com.tanay.blogapp.repository.PostLikeRepository;
 import com.tanay.blogapp.repository.PostRepository;
 import com.tanay.blogapp.repository.UserRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,10 +33,11 @@ public class UserService {
 
     private static final String GHOST_EMAIL = "deleted@blog.com";
 
+    @Transactional(readOnly = true)
     public UserProfileDto getUserProfileDetails(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with id " + id + " not found"));
 
-        return userMapper.toDto(user);
+        return userMapper.toUserProfileDto(user);
     }
 
     @Transactional
@@ -53,7 +53,7 @@ public class UserService {
             user.setBio(request.bio());
         }
 
-        return userMapper.toDto(user);
+        return userMapper.toUserProfileDto(user);
     }
 
     @Transactional
@@ -75,7 +75,7 @@ public class UserService {
     }
 
     @Transactional
-    public MessageResponseDto deleteUser(Long userId) {
+    public void deleteUser(Long userId) {
         User ghost = userRepository.findByEmail(GHOST_EMAIL)
                 .orElseThrow(() -> new IllegalStateException("Ghost user not found in database"));
 
@@ -84,7 +84,18 @@ public class UserService {
         postLikeRepository.reassignLikesToGhost(userId, ghost);
 
         userRepository.deleteById(userId);
+    }
 
-        return new MessageResponseDto("Account deleted successfully");
+    @Transactional(readOnly = true)
+    public Page<UserDetailsDto> getAllUsersDetails(Pageable pageable) {
+        Page<User> users = userRepository.findAll(pageable);
+        return users.map(userMapper::toUserDetailsDto);
+    }
+
+    @Transactional(readOnly = true)
+    public UserDetailsDto getUserDetails(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User with id " + id + " not found"));
+
+        return userMapper.toUserDetailsDto(user);
     }
 }

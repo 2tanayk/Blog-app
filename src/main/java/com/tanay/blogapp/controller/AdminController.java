@@ -1,21 +1,22 @@
 package com.tanay.blogapp.controller;
 
+import com.tanay.blogapp.dto.MessageResponseDto;
 import com.tanay.blogapp.dto.PromoteUserRequestDto;
+import com.tanay.blogapp.dto.UserDetailsDto;
 import com.tanay.blogapp.service.AdminService;
+import jakarta.validation.Valid;
 import com.tanay.blogapp.service.PostService;
 import com.tanay.blogapp.service.TagService;
-import jakarta.validation.Valid;
+import com.tanay.blogapp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin")
@@ -25,11 +26,30 @@ public class AdminController {
     private final AdminService adminService;
     private final PostService postService;
     private final TagService tagService;
+    private final UserService userService;
 
     @GetMapping
     public ResponseEntity<String> admin(Authentication authentication) {
         log.info("GET /admin - admin dashboard accessed by {}", authentication.getName());
         return ResponseEntity.ok("Admin access granted for " + authentication.getName());
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<Page<UserDetailsDto>> getAllUsers(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(userService.getAllUsersDetails(pageable));
+    }
+
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<UserDetailsDto> getUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(userService.getUserDetails(userId));
+    }
+
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/posts/{id}")
@@ -53,10 +73,10 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-//    @PatchMapping("/users/promote")
-//    public ResponseEntity<String> promoteUserToAdmin(
-//            @Valid @RequestBody PromoteUserRequestDto request
-//    ) {
-//        return ResponseEntity.ok(adminService.promoteUserToAdmin(request.email()));
-//    }
+    @PatchMapping("/users/promote")
+    public ResponseEntity<MessageResponseDto> promoteUserToAdmin(
+            @Valid @RequestBody PromoteUserRequestDto request
+    ) {
+        return ResponseEntity.ok(adminService.promoteUserToAdmin(request.email()));
+    }
 }

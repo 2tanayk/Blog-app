@@ -68,7 +68,8 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<MessageResponseDto> deleteCurrentUser(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(userService.deleteUser(user.getId()));
+    public ResponseEntity<Void> deleteCurrentUser(@AuthenticationPrincipal User user) {
+        userService.deleteUser(user.getId());
+        return ResponseEntity.noContent().build();
     }
 }

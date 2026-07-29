@@ -36,4 +36,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Post p SET p.user = :ghost WHERE p.user.id = :userId")
     void reassignPostsToGhost(@Param("userId") Long userId, @Param("ghost") User ghost);
+
+    long countByStatus(PostStatus status);
 }

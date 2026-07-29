@@ -2,6 +2,7 @@ package com.tanay.blogapp.controller;
 
 import com.tanay.blogapp.dto.MessageResponseDto;
 import com.tanay.blogapp.dto.PromoteUserRequestDto;
+import com.tanay.blogapp.dto.StatsDto;
 import com.tanay.blogapp.dto.UserDetailsDto;
 import com.tanay.blogapp.service.AdminService;
 import jakarta.validation.Valid;
@@ -78,5 +79,10 @@ public class AdminController {
             @Valid @RequestBody PromoteUserRequestDto request
     ) {
         return ResponseEntity.ok(adminService.promoteUserToAdmin(request.email()));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<StatsDto> getStats() {
+        return ResponseEntity.ok(adminService.getStats());
     }
 }

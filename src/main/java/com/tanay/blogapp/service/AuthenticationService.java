@@ -2,6 +2,7 @@ package com.tanay.blogapp.service;
 
 import com.tanay.blogapp.dto.AuthenticationResponseDto;
 import com.tanay.blogapp.dto.LoginRequestDto;
+import com.tanay.blogapp.dto.MessageResponseDto;
 import com.tanay.blogapp.dto.RegisterRequestDto;
 import com.tanay.blogapp.entity.Role;
 import com.tanay.blogapp.entity.User;
@@ -31,6 +32,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Transactional
     public AuthenticationResponseDto register(RegisterRequestDto request) {
@@ -83,6 +85,15 @@ public class AuthenticationService {
         String token = jwtService.generateToken(user);
 
         return new AuthenticationResponseDto(token);
+    }
+
+    @Transactional
+    public MessageResponseDto logout(String token) {
+        String jti = jwtService.extractTokenId(token);
+        if (jti != null) {
+            tokenBlacklistService.blacklistToken(jti, jwtService.extractExpiration(token));
+        }
+        return new MessageResponseDto("Logged out successfully");
     }
 
     @Transactional

@@ -6,8 +6,10 @@ import com.tanay.blogapp.dto.UpdateUserPasswordDto;
 import com.tanay.blogapp.dto.UpdateUserProfileDto;
 import com.tanay.blogapp.dto.UserProfileDto;
 import com.tanay.blogapp.entity.User;
+import com.tanay.blogapp.service.JwtService;
 import com.tanay.blogapp.service.PostService;
 import com.tanay.blogapp.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     private final UserService userService;
     private final PostService postService;
+    private final JwtService jwtService;
 
     @GetMapping("/{id}")
     public ResponseEntity<UserProfileDto> getUserProfileDetails(@PathVariable Long id) {
@@ -62,14 +66,25 @@ public class UserController {
     @PatchMapping("/me/password")
     public ResponseEntity<MessageResponseDto> updateCurrentUserPassword(
             @AuthenticationPrincipal User user,
-            @Valid @RequestBody UpdateUserPasswordDto request
+            @Valid @RequestBody UpdateUserPasswordDto request,
+            HttpServletRequest servletRequest
     ) {
-        return ResponseEntity.ok(userService.updatePassword(user.getId(), request));
+        String token = jwtService.extractToken(servletRequest);
+        MessageResponseDto response = userService.updatePassword(user.getId(), request, token);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, "jwt=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax")
+                .body(response);
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteCurrentUser(@AuthenticationPrincipal User user) {
-        userService.deleteUser(user.getId());
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deleteCurrentUser(
+            @AuthenticationPrincipal User user,
+            HttpServletRequest servletRequest
+    ) {
+        String token = jwtService.extractToken(servletRequest);
+        userService.deleteUser(user.getId(), token);
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, "jwt=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax")
+                .build();
     }
 }

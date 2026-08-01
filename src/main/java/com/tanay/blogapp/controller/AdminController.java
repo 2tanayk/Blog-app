@@ -49,7 +49,7 @@ public class AdminController {
 
     @DeleteMapping("/users/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
-        userService.deleteUser(userId);
+        userService.deleteUser(userId, null);
         return ResponseEntity.noContent().build();
     }
 

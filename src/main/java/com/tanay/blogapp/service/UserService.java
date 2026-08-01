@@ -28,6 +28,8 @@ public class UserService {
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
 
+    private final JwtService jwtService;
+    private final TokenBlacklistService tokenBlacklistService;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -57,7 +59,7 @@ public class UserService {
     }
 
     @Transactional
-    public MessageResponseDto updatePassword(Long id, UpdateUserPasswordDto request) {
+    public MessageResponseDto updatePassword(Long id, UpdateUserPasswordDto request, String token) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User with id " + id + " not found"));
 
@@ -71,11 +73,19 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
 
+        // Blacklist the current token so the user is logged out after password change
+        if (token != null) {
+            String jti = jwtService.extractTokenId(token);
+            if (jti != null) {
+                tokenBlacklistService.blacklistToken(jti, jwtService.extractExpiration(token));
+            }
+        }
+
         return new MessageResponseDto("Password updated successfully");
     }
 
     @Transactional
-    public void deleteUser(Long userId) {
+    public void deleteUser(Long userId, String token) {
         User ghost = userRepository.findByEmail(GHOST_EMAIL)
                 .orElseThrow(() -> new IllegalStateException("Ghost user not found in database"));
 
@@ -84,6 +94,14 @@ public class UserService {
         postLikeRepository.reassignLikesToGhost(userId, ghost);
 
         userRepository.deleteById(userId);
+
+        // Blacklist the token so the deleted user is logged out immediately
+        if (token != null) {
+            String jti = jwtService.extractTokenId(token);
+            if (jti != null) {
+                tokenBlacklistService.blacklistToken(jti, jwtService.extractExpiration(token));
+            }
+        }
     }
 
     @Transactional(readOnly = true)

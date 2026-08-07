@@ -35,3 +35,5 @@ build/
 .TODO.txt
 
 docs/handoffs/
+
+.env

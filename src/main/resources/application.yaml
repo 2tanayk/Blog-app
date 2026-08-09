@@ -29,6 +29,7 @@ spring:
             client-secret: ${GOOGLE_CLIENT_SECRET}
 
 server:
+  forward-headers-strategy: framework
   servlet:
     context-path: /api/v1
 

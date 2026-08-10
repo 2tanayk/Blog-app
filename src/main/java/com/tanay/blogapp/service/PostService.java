@@ -73,7 +73,7 @@ public class PostService {
      */
     @Transactional(readOnly = true)
     public Page<PostSummaryDto> getAllPosts(Pageable pageable) {
-        Page<Post> posts = postRepository.findAll(pageable);
+        Page<Post> posts = postRepository.findByStatus(PostStatus.PUBLISHED, pageable);
 
         Map<Long, Long> likeCounts = fetchLikeCounts(posts.getContent());
 
@@ -85,13 +85,27 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostDto getPostById(Long id) {
-        Post post = postRepository.findPostWithUserById(id).orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
+    public PostDto getPostById(Long id, User currentUser) {
+        Post post = postRepository.findPostWithUserById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Post with id " + id + " not found"));
+
+        // Drafts are only visible to the author or admin
+        if (post.getStatus() == PostStatus.DRAFT
+                && !isAuthorOrAdmin(post, currentUser)) {
+            throw new ResourceNotFoundException("Post with id " + id + " not found");
+        }
 
         long likeCount = postLikeRepository.countByPostId(id);
         boolean likedByCurrentUser = isLikedByCurrentUser(id);
 
         return postMapper.toDto(post).withLikes(likeCount, likedByCurrentUser);
+    }
+
+    private boolean isAuthorOrAdmin(Post post, User currentUser) {
+        if (currentUser == null) return false;
+        return currentUser.getId().equals(post.getUser().getId())
+                || currentUser.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 
     @PreAuthorize("hasAuthority('POST_EDIT_ANY') or (hasAuthority('POST_EDIT_OWN') and @postSecurity.isOwner(#id, principal))")

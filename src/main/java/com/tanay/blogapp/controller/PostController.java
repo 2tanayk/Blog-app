@@ -70,9 +70,9 @@ public class PostController {
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @GetMapping("/{id}")
-    public ResponseEntity<PostDto> getPostById(@PathVariable Long id) {
+    public ResponseEntity<PostDto> getPostById(@PathVariable Long id, @AuthenticationPrincipal User user) {
         log.info("GET /posts/{} - getting single post", id);
-        return ResponseEntity.ok(postService.getPostById(id));
+        return ResponseEntity.ok(postService.getPostById(id, user));
     }
 
     @Operation(summary = "Update a post", description = "Updates the title/content of a post (author or admin only)")

@@ -2,6 +2,7 @@ package com.tanay.blogapp.controller;
 
 import com.tanay.blogapp.dto.ErrorResponseDto;
 import com.tanay.blogapp.dto.MessageResponseDto;
+import com.tanay.blogapp.dto.PostSummaryDto;
 import com.tanay.blogapp.dto.PromoteUserRequestDto;
 import com.tanay.blogapp.dto.StatsDto;
 import com.tanay.blogapp.dto.UserDetailsDto;
@@ -81,6 +82,22 @@ public class AdminController {
     @GetMapping("/users/{userId}")
     public ResponseEntity<UserDetailsDto> getUser(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.getUserDetails(userId));
+    }
+
+    @Operation(summary = "List all posts for a user", description = "Returns all posts (including drafts) for any user. Admin only.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Paginated post listing"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden — not an admin",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @GetMapping("/users/{userId}/posts")
+    public ResponseEntity<Page<PostSummaryDto>> getAllPostsForUser(
+            @PathVariable Long userId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(postService.getAllPostsByUserId(userId, pageable));
     }
 
     @Operation(summary = "Delete a user", description = "Admin deletes any user account. Content is reassigned to a ghost user.")

@@ -23,6 +23,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @EntityGraph(value = "Post.withUser")
     Page<Post> findAll(Pageable pageable);
 
+    @EntityGraph(value = "Post.withUser")
+    Page<Post> findByStatus(PostStatus status, Pageable pageable);
+
     @Query("SELECT p FROM Post p WHERE p.id = :id")
     @EntityGraph(value = "Post.withUser")
     Optional<Post> findPostWithUserById(@Param("id") Long id);

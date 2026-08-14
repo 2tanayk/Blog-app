@@ -5,12 +5,11 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED)
 ![Railway](https://img.shields.io/badge/Railway-deploy-0B0D0E)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+<!-- ![License](https://img.shields.io/badge/License-MIT-yellow) -->
 
 A Medium-inspired REST API for publishing, managing, and browsing blog posts. Users authenticate via email/password **or** Google OAuth2, author posts that live through a draft → published lifecycle, and interact through comments, likes, and followable public profiles. Includes a full admin surface for content moderation and platform analytics.
 
-- **Live app:** `[LIVE_URL]`
-- **Swagger UI:** `[LIVE_URL]/swagger-ui.html`
+- **Swagger UI:** [link](https://blog-app-production-86e7.up.railway.app/api/v1/swagger-ui/index.html)
 
 ---
 
@@ -130,6 +129,4 @@ docker-compose up --build
 ---
 
 ## CI/CD
-
-- Dockerized for deployment: `Dockerfile` + `docker-compose.yml` target Railway
 - CI pipeline (GitHub Actions) is not yet wired up — ready to be added under `.github/workflows/`
